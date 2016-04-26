@@ -1,13 +1,15 @@
 # project/views.py
+
+#######Imports###########
 from functools import wraps
 
 from flask import Flask, flash, redirect, render_template, request, session, \
 	url_for
-from forms import AddTaskForm
+from forms import AddTaskForm, RegisterForm, LoginForm
 from flask.ext.sqlalchemy import SQLAlchemy
 
 
-#config
+#######Config###########
 app = Flask(__name__)
 app.config.from_object('_config')
 db = SQLAlchemy(app)
@@ -97,6 +99,23 @@ def delete_entry(task_id):
 	db.session.commit()
 	flash("The task was deleted. Why not add a new one?")
 	return redirect(url_for('tasks'))
+
+@app.route('/register/', methods=['POST','GET'])
+def register():
+	error = None
+	form = RegisterForm(request.form)
+	if request.method == 'POST':
+		if form.validate_on_submit():
+			new_user = User(
+				form.name.data,
+				form.email.data,
+				form.password.data,
+				)
+			db.session.add(new_user)
+			db.commit()
+			flash('Thanks for registering. Please login.')
+			return redirect(url_for('login'))
+	return render_template('register.html', form=form, error=error)
 
 
 
