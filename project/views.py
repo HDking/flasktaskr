@@ -7,6 +7,7 @@ from flask import Flask, flash, redirect, render_template, request, session, \
 	url_for
 from forms import AddTaskForm, RegisterForm, LoginForm
 from flask.ext.sqlalchemy import SQLAlchemy
+import datetime
 
 
 #######Config###########
@@ -15,6 +16,7 @@ app.config.from_object('_config')
 db = SQLAlchemy(app)
 
 from models import Task
+from models import User
 
 
 #helper functions
@@ -38,16 +40,19 @@ def logout():
 @app.route('/', methods=['GET', 'POST'])
 def login():
 	error = None
-	if request.method == 'POST':
-		if request.form['username'] != app.config['USERNAME'] \
-			or request.form['password'] != app.config['PASSWORD']:
-			error = 'Invalid Credentials. Please try again.'
-			return render_template('login.html', error=error)
+	form = LoginForm(request.form)
+	if request.method=="POST":
+		if form.validate_on_submit():
+			user = User.query.filter_by(name=request.form['name']).first()
+			if user is not None and user.password == request.form['password']:
+				session['logged_in'] = True
+				flash('Welcome!')
+				return redirect(url_for('tasks'))
+			else:
+				error = "Invalid username or password."
 		else:
-			session['logged_in'] = True
-			flash('Welcome!')
-			return redirect(url_for('tasks'))
-	return render_template('login.html')
+			error = "Both fields are required."
+	return render_template('login.html', form=form, error=error)
 
 @app.route('/tasks/')
 @login_required
@@ -72,8 +77,10 @@ def new_task():
 				form.name.data,
 				form.due_date.data,
 				form.priority.data,
+				datetime.datetime.utcnow(),
+				'1',
 				'1'
-			)
+				)
 			db.session.add(new_task)
 			db.session.commit()
 			flash('New entry was successfully posted. Thanks.')
@@ -109,10 +116,10 @@ def register():
 			new_user = User(
 				form.name.data,
 				form.email.data,
-				form.password.data,
+				form.password.data
 				)
 			db.session.add(new_user)
-			db.commit()
+			db.session.commit()
 			flash('Thanks for registering. Please login.')
 			return redirect(url_for('login'))
 	return render_template('register.html', form=form, error=error)
