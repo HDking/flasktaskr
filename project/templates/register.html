@@ -27,7 +27,7 @@
 		</p>
 
 		<p>
-			{{ form.email(placeholder="password") }}
+			{{ form.password(placeholder="password") }}
 			{% if form.password.errors %}
 				<span class="error">
 					{% for error in form.password.errors %}
@@ -38,7 +38,7 @@
 		</p>
 
 		<p>
-			{{ form.email(placeholder="confirm password") }}
+			{{ form.confirm(placeholder="confirm password") }}
 			{% if form.confirm.errors %}
 				<span class="error">
 					{% for error in form.confirm.errors %}
